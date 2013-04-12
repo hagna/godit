@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"log"
+	"runtime/pprof"
+	"flag"
 	"fmt"
 	"github.com/nsf/termbox-go"
 	"github.com/nsf/tulib"
@@ -9,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 )
+
+var profileme = flag.String("cpuprofile", "", "profile me")
 
 const (
 	tabstop_length            = 8
@@ -746,6 +751,15 @@ func (g *godit) has_unsaved_buffers() bool {
 }
 
 func main() {
+	flag.Parse()
+	if *profileme != "" {
+		f, err := os.Create(*profileme)
+		if err != nil {
+				log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -753,7 +767,7 @@ func main() {
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputAlt)
 
-	godit := new_godit(os.Args[1:])
+	godit := new_godit(flag.Args())
 	godit.resize()
 	godit.draw()
 	termbox.SetCursor(godit.cursor_position())
